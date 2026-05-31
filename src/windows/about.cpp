@@ -85,6 +85,14 @@ LRESULT CALLBACK WindowProc_about(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
         int clientWidth = rect.right - rect.left;  // 客户区宽度
         int clientHeight = rect.bottom - rect.top; // 客户区高度
 
+		// 获取程序图标位置
+        auto tmp_path = std::make_unique<wchar_t[]>(MAX_PATH);
+        swprintf_s(tmp_path.get(),
+                   MAX_PATH,
+                   L"%ls\\icon-org.png",
+                   global.audioLibPath
+                   );
+
         // 创建Logo图标（静态图片控件）
         HWND hLogo = CreateWindowExW(
             0, L"STATIC", L"",
@@ -93,7 +101,7 @@ LRESULT CALLBACK WindowProc_about(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
             hwnd, (HMENU)IDC_LOGO, global.hInstance, NULL);
 
         // 使用GDI+加载PNG图片作为Logo
-        Gdiplus::Image *pLogoImage = Gdiplus::Image::FromFile(L"./resource/icon-org.png");
+        Gdiplus::Image *pLogoImage = Gdiplus::Image::FromFile(tmp_path.get());
         if (pLogoImage && pLogoImage->GetLastStatus() == Gdiplus::Ok)
         {
             // 创建一个位图来绘制图片

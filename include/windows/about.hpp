@@ -6,6 +6,7 @@
 
 #include <windows.h>
 #include <gdiplus.h>
+#include <memory>
 #include "global.hpp"
 
 // 函数声明
