@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <thread>
+#include <algorithm>
 #include "global.hpp"
 #include "debug.hpp"
 #include "window_manager.hpp"
