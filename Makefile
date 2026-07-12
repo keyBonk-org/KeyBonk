@@ -60,7 +60,7 @@ CXX_OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CXX_SRCS))
 RES_OBJ  := $(OBJ_DIR)/rc/resources.o
 
 # 默认目标（64位debug模式）
-.PHONY: all clean help run release release64 release32 installer installer64 installer32
+.PHONY: all clean help run release release64 release32 installer installer64 installer32 lib
 all: $(BIN)
 	@echo 调试版本构建完成: $@
 
@@ -166,3 +166,8 @@ installer32: installer.iss release32
 	@echo 正在构建32位安装程序 ...
 	@start cmd /c chcp 936 ^&^& iscc /DMyAppArch=32 installer.iss
 	@echo 32位安装程序编译完毕
+
+lib:
+	@echo 正在下载/更新 audio-player 库 ...
+	@powershell -ExecutionPolicy Bypass -File "download_audio_lib.ps1" -Repo "$(AUDIO_LIB_REPO)" -Arch "$(ARCH_TEXT)" -DownloadDir "$(LIB_DOWNLOAD_PATH)" -TargetFile "$(AUDIO_LIB)"
+	@echo 库已就绪。

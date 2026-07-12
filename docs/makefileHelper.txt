@@ -3,7 +3,7 @@
 默认模式: 64位调试模式
 
 可以使用的目标:
- all clean help run release release64 release32 installer installer64 installer32
+ all clean help run release release64 release32 installer installer64 installer32 lib
 
 目标作用：
 	- all: 在默认模式下构建项目
@@ -16,6 +16,7 @@
 	- installer: 构建64位和32位安装程序
 	- installer64: 构建64位发布版本的安装程序
 	- installer32: 构建32位发布版本的安装程序
+	- lib: 下载库文件，如果已经存在，强制重新下载最新版本
 
 可以控制变量：
  DEBUG ARCH
@@ -23,4 +24,4 @@
 	- DEBUG: 设置debug参数用于cpp文件编译，默认为-DKB_DEBUG
 	- ARCH: 当前编译架构（32/64位）
 
-帮助编写时间：2026/2/9 17:02
+帮助编写时间：2026/7/13 01:08
