@@ -14,16 +14,18 @@ ifeq ($(ARCH),32)
 CXX      = i686-w64-mingw32-g++
 WINDRES  = windres
 WINDRES_FLAG = -F pe-i386 -o
+ARCH_TEXT= x86
 else
 CXX      = g++
 WINDRES  = windres
 WINDRES_FLAG = -F pe-x86-64 -o
+ARCH_TEXT= x64
 endif
 
 # 基本变量
 CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic -O2 -DUNICODE -D_WIN32_WINNT=0x0601
 LDFLAGS  = -mwindows -municode -std=c++17
-LDLIBS   = -luser32 -lgdi32 -lole32 -lgdiplus -lwinmm
+LDLIBS   = -luser32 -lgdi32 -lole32 -lgdiplus -lwinmm -lmsacm32 -lcomdlg32
 
 # 预编译头文件设置
 PCH_FILE := pch.hpp
@@ -33,9 +35,11 @@ SRC_DIR   := src
 INC_DIR   := include
 RES_DIR   := resource
 BUILD_BASE:= build
+LIB_DIR   := libs
 BUILD_DIR := $(BUILD_BASE)/$(ARCH)
 OBJ_DIR   := $(BUILD_DIR)/obj
 BIN       := $(BUILD_DIR)/KeyBonk.exe
+INCLUDE_DIRS:= -I$(INC_DIR) -I$(LIB_DIR) -I$(RES_DIR)
 
 # 预编译头文件设置（依赖于OBJ_DIR）
 PCH_DIR  := $(OBJ_DIR)
@@ -44,6 +48,12 @@ PCH_OBJ  := $(PCH_DIR)/$(PCH_FILE).gch
 # 源文件列表 
 CXX_SRCS := $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/windows/*.cpp) $(wildcard $(SRC_DIR)/hook/*.cpp) $(wildcard $(SRC_DIR)/functions/*.cpp)
 RES_SRC  := $(RES_DIR)/resources.rc
+
+# 库文件目录
+LIB_INCLUDE := libs
+LIB_DOWNLOAD_PATH := $(BUILD_DIR)/libs
+AUDIO_LIB_REPO    := keybonk-org/audio-player
+AUDIO_LIB := $(LIB_DOWNLOAD_PATH)/audioPlayer_$(ARCH_TEXT).a
 
 # 自动推导对象 
 CXX_OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CXX_SRCS))
@@ -55,7 +65,7 @@ all: $(BIN)
 	@echo 调试版本构建完成: $@
 
 # 链接 
-$(BIN): $(CXX_OBJS) $(RES_OBJ) | $(BUILD_DIR)/bin/default
+$(BIN): $(CXX_OBJS) $(RES_OBJ) $(AUDIO_LIB) | $(BUILD_DIR)/bin/default
 	@echo 正在链接生成可执行文件 $@ ...
 	@$(CXX) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
@@ -63,18 +73,24 @@ $(BIN): $(CXX_OBJS) $(RES_OBJ) | $(BUILD_DIR)/bin/default
 $(PCH_OBJ): $(INC_DIR)/$(PCH_FILE) | $(PCH_DIR)
 	@echo 正在生成预编译头文件 $@
 	@if not exist "$(PCH_DIR)" mkdir "$(PCH_DIR)"
-	@$(CXX) $(CXXFLAGS) -I$(INC_DIR) -I$(RES_DIR) -c $(INC_DIR)/$(PCH_FILE) -o $@
+	@$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -c $(INC_DIR)/$(PCH_FILE) -o $@
 
 # 编译对象文件（使用预编译头）
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR) $(PCH_OBJ)
 	@echo 正在将源码文件 $< 编译到 $@
 	@if not exist "$(dir $@)" mkdir "$(dir $@)"
-	@$(CXX) $(CXXFLAGS) $(DEBUG) -I$(INC_DIR) -I$(RES_DIR) -include $(PCH_FILE) -MMD -MP -c $< -o $@
+	@$(CXX) $(CXXFLAGS) $(DEBUG) $(INCLUDE_DIRS) -include $(PCH_FILE) -MMD -MP -c $< -o $@
 
 # 资源文件 
 $(RES_OBJ): $(RES_SRC) ./include/globalDevelopmentControl.hpp | $(OBJ_DIR)/rc
 	@echo 正在将RC文件 "$<" 编译到 $@ ...
 	@$(WINDRES) $< $(WINDRES_FLAG) $@
+
+# 音频库下载
+$(AUDIO_LIB):
+	@echo 正在下载/更新 audio-player 库 ...
+	@powershell -ExecutionPolicy Bypass -File "download_audio_lib.ps1" -Repo "$(AUDIO_LIB_REPO)" -Arch "$(ARCH_TEXT)" -DownloadDir "$(LIB_DOWNLOAD_PATH)" -TargetFile "$(AUDIO_LIB)"
+	@echo 库已就绪。
 
 # 自动依赖 
 -include $(CXX_OBJS:.o=.d)

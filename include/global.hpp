@@ -7,6 +7,9 @@
 #include <windows.h>
 #include <gdiplus.h>
 #include <optional>
+#include <map>
+#include <mutex>
+#include <atomic>
 #include "functions/background.hpp"
 
 namespace keybonk
@@ -36,8 +39,11 @@ namespace keybonk
         HDC memDC = nullptr;          // 主窗口内存DC
         HBITMAP hOldBmp = nullptr;    // 主窗口内存DC默认位图
         int nCmdShow;
-        HRESULT hrMain;                            // 接受Windows函数的返回结果
-        std::optional<keybonk::background> bg_opt; // 背景对象，在main初始化
+        HRESULT hrMain;                             // 接受Windows函数的返回结果
+        std::optional<keybonk::background> bg_opt;  // 背景对象，在main初始化
+        std::map<int, size_t> audioList;            // 音频库文件大小
+        std::mutex mutex;                           // 互斥锁
+        std::atomic<bool> audioPreloadReady{false}; // 用于接收预加载完成的信号
         // 全局资源释放
         ~resource_manager();
     };

@@ -2,6 +2,8 @@
 // 主程序存放的文件
 // 包含消息循环，作为入口
 
+#include <filesystem>
+#include <thread>
 #include "global.hpp"
 #include "debug.hpp"
 #include "window_manager.hpp"
@@ -10,6 +12,7 @@
 #include "functions/files.hpp"
 #include "resources.hpp"
 #include "functions/background.hpp"
+#include "audio-player/audioPlayer.hpp"
 
 // 自定义消息
 #define WM_WINDOW_HAS_CREAT (WM_APP + 4) // 窗口以及创建，由后面打开的进程发送到当前窗口
@@ -26,6 +29,51 @@ BOOL IsInstanceAlreadyRunning(LPCTSTR windowClass, LPCTSTR windowTitle)
         return TRUE;
     }
     return FALSE;
+}
+
+void preloadAudio()
+{
+    using keybonk::global;
+    std::filesystem::path audioLibPath(global.audioLibPath);
+    if (!std::filesystem::exists(audioLibPath) || !std::filesystem::is_directory(audioLibPath))
+        return;
+
+    for (const auto &entry : std::filesystem::recursive_directory_iterator(audioLibPath))
+    {
+        // 只处理普通文件且扩展名为 .wav
+        if (!std::filesystem::is_regular_file(entry) || entry.path().extension() != ".wav")
+            continue;
+
+        // 获取不带扩展名的文件名
+        std::wstring stem = entry.path().stem().wstring();
+
+        // 检查文件名是否为纯数字（并转成整数）
+        if (stem.empty() || !std::all_of(stem.begin(), stem.end(), ::iswdigit))
+            continue; // 不是纯数字，舍弃
+
+        int key = std::stoi(stem); // 转成整数（假设不会溢出）
+
+        // 检查是否为合法的VK键值
+        if (key < 0 || key > 255)
+            continue;
+
+        // 调用 preloadAudio，获取返回值
+        yumo::readySign ready(false); // 用于接收预加载完成的信号
+        std::wstring fullPath = entry.path().wstring();
+        size_t audioID = yumo::preloadAudio(fullPath.c_str(), &ready); // 假设成功，内部处理错误
+
+        while (ready == false)
+        {
+            // 等待预加载完成
+            Sleep(10); // 休眠10毫秒，避免CPU占用过高
+        }
+        {
+            std::lock_guard<std::mutex> lock(global.mutex); // 加锁，确保线程安全
+            // 存入 map
+            global.audioList[key] = audioID; // 或者用 insert，但 [] 会覆盖，通常没问题
+        }
+    }
+    global.audioPreloadReady.store(true, std::memory_order_release); // 设置预加载完成标志
 }
 
 // 主程序
@@ -192,6 +240,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstanc
         return 0;
     }
     global.bg_opt->resetToDefault();
+
+    // =============================================================
+    // ||                     预处理音频                           ||
+    // =============================================================
+
+    // 准备预加载线程
+    std::thread preloadAudioThread(preloadAudio);
+
+    preloadAudioThread.detach(); // 分离线程，让它在后台运行
 
     // =============================================================
     // ||                      钩子安装                            ||

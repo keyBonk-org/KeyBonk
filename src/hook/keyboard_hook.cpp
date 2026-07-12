@@ -16,9 +16,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
         if ((wParam == WM_KEYDOWN /*|| wParam == WM_SYSKEYDOWN*/) and not keybonk::global.Mute)
         {
             DWORD vkCode = keyInfo->vkCode;
-            wchar_t fileName[10]{};
-            swprintf_s(fileName, _countof(fileName), L"%lu", vkCode);
-            PlayAudioFile(fileName);
+            PlayAudioFile(vkCode);
         }
     }
     // 按照规定需要将事件传递给下一个钩子或系统

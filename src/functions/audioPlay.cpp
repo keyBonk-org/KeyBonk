@@ -3,26 +3,17 @@
 #include "globalDevelopmentControl.hpp"
 #include "functions/files.hpp"
 #include "global.hpp"
+#include "audio-player/audioPlayer.hpp"
 
 // 播放音频文件的通用函数
-void PlayAudioFile(const wchar_t *fileName)
+void PlayAudioFile(int keyCode)
 {
-    wchar_t audioPath[MAX_PATH]{};
-    swprintf_s(audioPath,
-               MAX_PATH,
-               L"%ls\\audios\\%ls.wav",      // 格式串
-               keybonk::global.audioLibPath, // 音频库位置
-               fileName);
-    wchar_t *fullPath = new wchar_t[MAX_PATH]{};                   // 文件名
-    GetExeRelativePath(audioPath, fullPath, MAX_PATH);
-
-    if (FileExists(fullPath))
+    if (keybonk::global.audioPreloadReady.load(std::memory_order_acquire)) // 检查预加载是否完成
     {
-#ifdef KB_DEBUG
-        debug::logOutput(L"[功能]播放了音频", fullPath, "\n");
-#endif
-        PlaySoundW(fullPath, NULL, SND_FILENAME | SND_ASYNC);
+        // ready设为true说明预加载完成，没必要上锁了
+        if (auto it = keybonk::global.audioList.find(keyCode); it != keybonk::global.audioList.end())
+        {
+            yumo::addAudio(it->second);
+        }
     }
-
-    delete[] fullPath;
 }

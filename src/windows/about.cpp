@@ -85,13 +85,12 @@ LRESULT CALLBACK WindowProc_about(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
         int clientWidth = rect.right - rect.left;  // 客户区宽度
         int clientHeight = rect.bottom - rect.top; // 客户区高度
 
-		// 获取程序图标位置
+        // 获取程序图标位置
         auto tmp_path = std::make_unique<wchar_t[]>(MAX_PATH);
         swprintf_s(tmp_path.get(),
                    MAX_PATH,
                    L"%ls\\icon-org.png",
-                   global.audioLibPath
-                   );
+                   global.audioLibPath);
 
         // 创建Logo图标（静态图片控件）
         HWND hLogo = CreateWindowExW(
@@ -155,7 +154,7 @@ LRESULT CALLBACK WindowProc_about(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
                         hwnd, (HMENU)IDC_DESCRIPTION, global.hInstance, NULL);
 
         // 创建个人网站链接
-        CreateWindowExW(WS_EX_TRANSPARENT, L"STATIC", L"访问我的网站: https://xiaoditx.github.io/",
+        CreateWindowExW(WS_EX_TRANSPARENT, L"STATIC", L"访问项目官网: https://keyBonk-org.github.io/",
                         WS_CHILD | WS_VISIBLE | SS_CENTER | SS_NOTIFY | SS_NOPREFIX,
                         20, 270, clientWidth - 40, 30, // 向下移动位置
                         hwnd, (HMENU)IDC_WEBSITE_LINK, global.hInstance, NULL);
@@ -210,7 +209,7 @@ LRESULT CALLBACK WindowProc_about(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
         case IDC_WEBSITE_LINK:
             // 网站链接点击事件
-            ShellExecuteW(NULL, L"open", L"https://xiaoditx.github.io/", NULL, NULL, SW_SHOWNORMAL);
+            ShellExecuteW(NULL, L"open", L"https://keyBonk-org.github.io/", NULL, NULL, SW_SHOWNORMAL);
             return 0;
         }
         break;
@@ -260,7 +259,7 @@ LRESULT CALLBACK WindowProc_about(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
         if (PtInRect(&linkRect, pt)) // 如果点击在链接的位置内
         {
             // 打开网站
-            ShellExecuteW(NULL, L"open", L"https://www.keybonk.com", NULL, NULL, SW_SHOWNORMAL);
+            ShellExecuteW(NULL, L"open", L"https://keyBonk-org.github.io/", NULL, NULL, SW_SHOWNORMAL);
         }
         break;
     }
